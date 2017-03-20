@@ -24,6 +24,7 @@ var rowCount = 9
 var tiles = []
 var markedTile = null
 var hens = []
+var henIdCounter = 0
 
 var workDayInFrames = null // NOTE: set in create
 
@@ -58,7 +59,7 @@ var buildRoadInTile = function (tile) {
 
 var henMoveIn = function (tile, henContainer) {
   var hen = {
-    id: hens.length,
+    id: henIdCounter++,
     x: tile.x,
     y: tile.y,
     speed: 2.689,
