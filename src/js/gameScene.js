@@ -14,7 +14,7 @@ var RESIDENCE = 'RESIDENCE'
 var COMMERCE = 'COMMERCE'
 var INDUSTRY = 'INDUSTRY'
 
-var HEN_IDLING_AT_HOME = 'HEN_IDLING_AT_HOME'
+var HEN_RESTING = 'HEN_RESTING'
 var HEN_WALKING = 'HEN_WALKING'
 var HEN_WORKING = 'HEN_WORKING'
 
@@ -69,7 +69,7 @@ var henMoveIn = function (tile, henContainer) {
     home: tile,
     workDay: dayInFrames / 3,
     workDayCount: 0,
-    state: HEN_IDLING_AT_HOME,
+    state: HEN_RESTING,
     sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
   }
 
@@ -307,7 +307,7 @@ var gameScene = {
 
       // console.log(hen)
 
-      if (hen.state === HEN_IDLING_AT_HOME) {
+      if (hen.state === HEN_RESTING) {
 
         hen.workDayCount -= 2
 
@@ -341,7 +341,7 @@ var gameScene = {
 
         if (hen.path.length === 0) {
           if (hen.target === hen.home) {
-            hen.state = HEN_IDLING_AT_HOME
+            hen.state = HEN_RESTING
           } else if (hen.target === hen.workPlace) {
             hen.state = HEN_WORKING
             hen.workDayCount = 0
