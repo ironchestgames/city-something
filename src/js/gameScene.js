@@ -69,6 +69,7 @@ var henMoveIn = function (tile, henContainer) {
     home: tile,
     workDay: dayInFrames / 3,
     workDayCount: 0,
+    energy: 1000,
     state: HEN_RESTING,
     sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
   }
@@ -309,16 +310,26 @@ var gameScene = {
 
       if (hen.state === HEN_RESTING) {
 
-        hen.workDayCount -= 2
+        hen.energy += 1.5
 
-        if (hen.workDayCount <= 0 && hen.workPlace) {
-          hen.target = hen.workPlace
-          henFindPathToTarget(hen)
+        if (hen.energy > 1000) {
+          hen.energy = 1000
+        }
+
+        if (hen.workPlace) {
+
+          if (hen.energy > 500) {
+            hen.target = hen.workPlace
+            henFindPathToTarget(hen)
+          }
+
         } else {
           findWorkPlace(hen)
         }
 
       } else if (hen.state === HEN_WALKING && hen.path && hen.path.length) {
+
+        hen.energy -= 0.2
         
         var nextPathPoint = hen.path[0]
 
@@ -354,9 +365,11 @@ var gameScene = {
       } else if (hen.state === HEN_WORKING) {
 
         hen.workDayCount += 1
+        hen.energy -= 1
 
         if (hen.workDayCount > hen.workDay) {
 
+          hen.workDayCount = 0
           hen.target = hen.home
           henFindPathToTarget(hen)
 
