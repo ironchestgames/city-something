@@ -14,12 +14,28 @@ var RESIDENCE = 'RESIDENCE'
 var COMMERCE = 'COMMERCE'
 var INDUSTRY = 'INDUSTRY'
 
+var HEN_IDLING_AT_HOME = 'HEN_IDLING_AT_HOME'
+var HEN_WALKING = 'HEN_WALKING'
+var HEN_WORKING = 'HEN_WORKING'
+
 var columnCount = 9
 var rowCount = 9
 
 var tiles = []
 var markedTile = null
 var hens = []
+
+var workDayInFrames = null // NOTE: set in create
+
+var getTile = function (x, y) {
+  return tiles[y * rowCount + x]
+}
+
+var getTilesByType = function (type) {
+  return tiles.filter(function (tile) {
+    return tile.type === type
+  })
+}
 
 var hideAllSpritesInTile = function (tile) {
   for (var spriteKey in tile.sprites) {
@@ -42,14 +58,17 @@ var buildRoadInTile = function (tile) {
 
 var henMoveIn = function (tile, henContainer) {
   var hen = {
+    id: hens.length,
     x: tile.x,
     y: tile.y,
     speed: 2.689,
     path: [],
-    target: tiles.find(function (tile) {
-      return tile.type === INDUSTRY
-    }),
-    isWalking: false,
+    workPlace: null,
+    target: null,
+    home: tile,
+    workDay: workDayInFrames,
+    workDayCount: 0,
+    state: HEN_IDLING_AT_HOME,
     sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
   }
 
@@ -57,17 +76,43 @@ var henMoveIn = function (tile, henContainer) {
 
   henContainer.addChild(hen.sprite)
 
+  hens.push(hen)
+}
+
+var henFindPathToTarget = function (hen) {
   easystar.findPath(hen.x, hen.y, hen.target.x, hen.target.y, function(path) {
     if (path !== null) {
       hen.path = path
-      hen.isWalking = true
+      hen.state = HEN_WALKING
       hen.sprite.x = hen.x * 64
       hen.sprite.y = hen.y * 64
       hen.sprite.visible = true
     }
   })
+}
 
-  hens.push(hen)
+var findWorkPlace = function (hen) {
+  var industryTiles = getTilesByType(INDUSTRY)
+
+  if (industryTiles.length > 0) {
+    var closestIndustry = industryTiles.pop()
+    var dx = closestIndustry.x - hen.x
+    var dy = closestIndustry.y - hen.y
+    var closestDistance = Math.sqrt(dx * dx + dy * dy)
+
+    while (industryTiles.length) {
+      var industry = industryTiles.pop()
+      dx = industry.x - hen.x
+      dy = industry.y - hen.y
+      var distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance < closestDistance) {
+        closestIndustry = industry
+      }
+    }
+
+    hen.workPlace = closestIndustry
+  }
 }
 
 var zoneCountText
@@ -80,6 +125,8 @@ var keyW
 var gameScene = {
   name: 'gameScene',
   create: function (sceneParams) {
+
+    workDayInFrames = global.loop.timestep * 3
 
     this.container = new PIXI.Container()
 
@@ -160,6 +207,7 @@ var gameScene = {
 
     easystar.setGrid(easystarGrid)
     easystar.setAcceptableTiles([WALKABLE])
+    easystar.setIterationsPerCalculation(global.loop.getFps())
 
     this.markerSprite = new PIXI.Sprite(PIXI.loader.resources['marker'].texture)
     this.markerSprite.visible = false
@@ -255,7 +303,20 @@ var gameScene = {
     for (var i = 0; i < hens.length; i++) {
       var hen = hens[i]
 
-      if (hen.isWalking) {
+      // console.log(hen)
+
+      if (hen.state === HEN_IDLING_AT_HOME) {
+
+        hen.workDayCount -= 2
+
+        if (hen.workDayCount <= 0 && hen.workPlace) {
+          hen.target = hen.workPlace
+          henFindPathToTarget(hen)
+        } else {
+          findWorkPlace(hen)
+        }
+
+      } else if (hen.state === HEN_WALKING && hen.path && hen.path.length) {
         
         var nextPathPoint = hen.path[0]
 
@@ -270,17 +331,35 @@ var gameScene = {
         var distance = Math.sqrt(dx * dx + dy * dy)
 
         if (distance < hen.speed + 0.1) {
-          console.log(nextPathPoint.x, nextPathPoint.y)
+          // console.log(nextPathPoint.x, nextPathPoint.y)
           var reachedPoint = hen.path.shift()
           hen.x = reachedPoint.x
           hen.y = reachedPoint.y
         }
 
         if (hen.path.length === 0) {
-          hen.isWalking = false
+          if (hen.target === hen.home) {
+            hen.state = HEN_IDLING_AT_HOME
+          } else if (hen.target === hen.workPlace) {
+            hen.state = HEN_WORKING
+            hen.workDayCount = 0
+          }
+
           hen.sprite.visible = false
-          console.log('stopped walking', hen)
+          // console.log('stopped walking', hen)
         }
+
+      } else if (hen.state === HEN_WORKING) {
+
+        hen.workDayCount += 1
+
+        if (hen.workDayCount > hen.workDay) {
+
+          hen.target = hen.home
+          henFindPathToTarget(hen)
+
+        }
+
       }
     }
   },
