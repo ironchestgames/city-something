@@ -6,8 +6,9 @@ var easystarGrid = []
 
 global.easystarGrid = easystarGrid
 
-var WALKABLE = 0
-var NON_WALKABLE = 1
+var TERRAIN_URBAN = 0
+var TERRAIN_FOREST = 1
+var TERRAIN_IMPENETRABLE = 2
 
 var FOREST = 'FOREST'
 var RESIDENCE = 'RESIDENCE'
@@ -48,13 +49,8 @@ var hideAllSpritesInTile = function (tile) {
 
 var buildRoadInTile = function (tile) {
   tile.roadSprite.visible = true
-  tile.hasRoads = true
-
-  for (var r = 0; r < rowCount; r++) {
-    for (var c = 0; c < columnCount; c++) {
-      easystarGrid[r][c] = tiles[(r * columnCount) + c].hasRoads === true ? WALKABLE : NON_WALKABLE
-    }
-  }
+  tile.terrain = TERRAIN_URBAN
+  easystarGrid[tile.y][tile.x] = TERRAIN_URBAN
 }
 
 var henMoveIn = function (tile, henContainer) {
@@ -74,6 +70,8 @@ var henMoveIn = function (tile, henContainer) {
     sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
   }
 
+  hen.sprite.anchor.x = 0.5
+  hen.sprite.anchor.y = 0.5
   hen.sprite.visible = false
 
   henContainer.addChild(hen.sprite)
@@ -135,9 +133,11 @@ var gameScene = {
 
     this.henContainer = new PIXI.Container()
     this.henContainer.x = 100
+    this.henContainer.y = 64
 
     this.tileContainer = new PIXI.Container()
     this.tileContainer.x = 100
+    this.tileContainer.y = 64
 
     this.guiContainer = new PIXI.Container()
 
@@ -157,14 +157,14 @@ var gameScene = {
       easystarGrid.push([])
       for (var c = 0; c < columnCount; c++) {
 
-        easystarGrid[r].push(NON_WALKABLE)
+        easystarGrid[r].push(TERRAIN_FOREST)
 
         var tile = {
           id: tileIdCount,
           x: c,
           y: r,
           type: FOREST,
-          hasRoads: false,
+          terrain: TERRAIN_FOREST,
           container: new PIXI.Container(),
           hens: [],
           sprites: {
@@ -200,6 +200,9 @@ var gameScene = {
         tile.container.x = c * 64
         tile.container.y = r * 64
 
+        tile.container.pivot.x = 32
+        tile.container.pivot.y = 32
+
         this.tileContainer.addChild(tile.container)
         
         tiles.push(tile)
@@ -209,7 +212,9 @@ var gameScene = {
     }
 
     easystar.setGrid(easystarGrid)
-    easystar.setAcceptableTiles([WALKABLE])
+    easystar.setAcceptableTiles([TERRAIN_URBAN, TERRAIN_FOREST])
+    easystar.setTileCost(TERRAIN_URBAN, 1)
+    easystar.setTileCost(TERRAIN_FOREST, 7)
     easystar.setIterationsPerCalculation(global.loop.getFps())
 
     this.markerSprite = new PIXI.Sprite(PIXI.loader.resources['marker'].texture)
@@ -338,8 +343,16 @@ var gameScene = {
 
         var angle = Math.atan2(dy, dx)
 
-        hen.sprite.x += Math.cos(angle) * hen.speed
-        hen.sprite.y += Math.sin(angle) * hen.speed
+        var speed = hen.speed
+        var currentTerrain = getTile(Math.round(hen.sprite.x / 64),
+            Math.round(hen.sprite.y / 64)).terrain
+
+        if (currentTerrain === TERRAIN_FOREST) {
+          speed = hen.speed / 3
+        }
+
+        hen.sprite.x += Math.cos(angle) * speed
+        hen.sprite.y += Math.sin(angle) * speed
 
         var distance = Math.sqrt(dx * dx + dy * dy)
 
