@@ -1,4 +1,15 @@
 var KeyButton = require('./KeyButton')
+var Easystarjs = require('easystarjs')
+
+var easystar = new Easystarjs.js()
+var easystarGrid = []
+
+global.easystarGrid = easystarGrid
+
+var WALKABLE = 0
+var NON_WALKABLE = 1
+
+var hen = null
 
 var FOREST = 'FOREST'
 var RESIDENCE = 'RESIDENCE'
@@ -22,6 +33,12 @@ var hideAllSpritesInTile = function (tile) {
 var buildRoadInTile = function (tile) {
   tile.roadSprite.visible = true
   tile.hasRoads = true
+
+  for (var r = 0; r < rowCount; r++) {
+    for (var c = 0; c < columnCount; c++) {
+      easystarGrid[r][c] = tiles[(r * columnCount) + c].hasRoads === true ? WALKABLE : NON_WALKABLE
+    }
+  }
 }
 
 var zoneCountText
@@ -36,6 +53,9 @@ var gameScene = {
   create: function (sceneParams) {
 
     this.container = new PIXI.Container()
+
+    this.henContainer = new PIXI.Container()
+    this.henContainer.x = 100
 
     this.tileContainer = new PIXI.Container()
     this.tileContainer.x = 100
@@ -55,7 +75,10 @@ var gameScene = {
     var tileIdCount = 0
 
     for (var r = 0; r < rowCount; r++) {
+      easystarGrid.push([])
       for (var c = 0; c < columnCount; c++) {
+
+        easystarGrid[r].push(NON_WALKABLE)
 
         var tile = {
           id: tileIdCount,
@@ -105,6 +128,9 @@ var gameScene = {
       }
     }
 
+    easystar.setGrid(easystarGrid)
+    easystar.setAcceptableTiles([WALKABLE])
+
     this.markerSprite = new PIXI.Sprite(PIXI.loader.resources['marker'].texture)
     this.markerSprite.visible = false
 
@@ -115,6 +141,8 @@ var gameScene = {
     this.guiContainer.addChild(zoneCountText)
 
     this.container.addChild(this.tileContainer)
+    this.container.addChild(this.tileContainer)
+    this.container.addChild(this.henContainer)
     this.container.addChild(this.markerSprite)
     this.container.addChild(this.guiContainer)
     global.baseStage.addChild(this.container)
@@ -164,6 +192,37 @@ var gameScene = {
       onKeyDown: onBuildRoad
     })
 
+    keyH = new KeyButton({
+      key: 'h',
+      onKeyDown: function () {
+        hen = {
+          x: markedTile.x,
+          y: markedTile.y,
+          speed: 2.689,
+          path: [],
+          target: tiles.find(function (tile) {
+            return tile.type === INDUSTRY
+          }),
+          isWalking: false,
+          sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
+        }
+
+        hen.sprite.visible = false
+
+        this.henContainer.addChild(hen.sprite)
+
+        easystar.findPath(hen.x, hen.y, hen.target.x, hen.target.y, function(path) {
+          if (path !== null) {
+            hen.path = path
+            hen.isWalking = true
+            hen.sprite.x = hen.x * 64
+            hen.sprite.y = hen.y * 64
+            hen.sprite.visible = true
+          }
+        })
+      }.bind(this)
+    })
+
   },
   destroy: function () {
     this.container.destroy()
@@ -190,6 +249,35 @@ var gameScene = {
     zoneCountText.text = 'R: ' + residenceCount + '\n' +
         'C: ' + commerceCount + '\n' +
         'I: ' + industryCount
+
+    easystar.calculate()
+
+    if (hen && hen.isWalking) {
+      
+      var nextPathPoint = hen.path[0]
+
+      var dx = nextPathPoint.x * 64 - hen.sprite.x
+      var dy = nextPathPoint.y * 64 - hen.sprite.y
+
+      var angle = Math.atan2(dy, dx)
+
+      hen.sprite.x += Math.cos(angle) * hen.speed
+      hen.sprite.y += Math.sin(angle) * hen.speed
+
+      var distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance < hen.speed + 0.1) {
+        console.log(nextPathPoint.x, nextPathPoint.y)
+        var reachedPoint = hen.path.shift()
+        hen.x = reachedPoint.x
+        hen.y = reachedPoint.y
+      }
+
+      if (hen.path.length === 0) {
+        hen.isWalking = false
+        console.log('stopped walking', hen)
+      }
+    }
   },
   draw: function () {
     global.renderer.render(this.container)
