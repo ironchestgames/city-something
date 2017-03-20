@@ -18,6 +18,7 @@ var INDUSTRY = 'INDUSTRY'
 var HEN_RESTING = 'HEN_RESTING'
 var HEN_WALKING = 'HEN_WALKING'
 var HEN_WORKING = 'HEN_WORKING'
+var HEN_ENJOYING = 'HEN_ENJOYING'
 
 var columnCount = 9
 var rowCount = 9
@@ -66,6 +67,7 @@ var henMoveIn = function (tile, henContainer) {
     workDay: dayInFrames / 3,
     workDayCount: 0,
     energy: 1000,
+    happiness: 1000,
     state: HEN_RESTING,
     sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
   }
@@ -91,28 +93,30 @@ var henFindPathToTarget = function (hen) {
   })
 }
 
-var findWorkPlace = function (hen) {
-  var industryTiles = getTilesByType(INDUSTRY)
+var findClosestTileOfType = function (hen, type) {
+  var tilesOfType = getTilesByType(type)
 
-  if (industryTiles.length > 0) {
-    var closestIndustry = industryTiles.pop()
-    var dx = closestIndustry.x - hen.x
-    var dy = closestIndustry.y - hen.y
+  if (tilesOfType.length > 0) {
+    var closestTile = tilesOfType.pop()
+    var dx = closestTile.x - hen.x
+    var dy = closestTile.y - hen.y
     var closestDistance = Math.sqrt(dx * dx + dy * dy)
 
-    while (industryTiles.length) {
-      var industry = industryTiles.pop()
-      dx = industry.x - hen.x
-      dy = industry.y - hen.y
+    while (tilesOfType.length) {
+      var tile = tilesOfType.pop()
+      dx = tile.x - hen.x
+      dy = tile.y - hen.y
       var distance = Math.sqrt(dx * dx + dy * dy)
 
       if (distance < closestDistance) {
-        closestIndustry = industry
+        closestTile = tile
       }
     }
 
-    hen.workPlace = closestIndustry
+    return closestTile
   }
+
+  return null
 }
 
 var zoneCountText
@@ -311,17 +315,25 @@ var gameScene = {
     for (var i = 0; i < hens.length; i++) {
       var hen = hens[i]
 
-      // console.log(hen)
-
       if (hen.state === HEN_RESTING) {
 
         hen.energy += 1.5
+        hen.happiness += 0.1
 
         if (hen.energy > 1000) {
           hen.energy = 1000
         }
 
-        if (hen.workPlace) {
+        if (hen.happiness < 200 && hen.energy > 400) {
+
+          var closestCommerce = findClosestTileOfType(hen, COMMERCE)
+
+          if (closestCommerce) {
+            hen.target = closestCommerce
+            henFindPathToTarget(hen)
+          }
+
+        } else if (hen.workPlace) {
 
           if (hen.energy > 500) {
             hen.target = hen.workPlace
@@ -329,7 +341,9 @@ var gameScene = {
           }
 
         } else {
-          findWorkPlace(hen)
+
+          hen.workPlace = findClosestTileOfType(hen, INDUSTRY)
+
         }
 
       } else if (hen.state === HEN_WALKING && hen.path && hen.path.length) {
@@ -369,6 +383,8 @@ var gameScene = {
           } else if (hen.target === hen.workPlace) {
             hen.state = HEN_WORKING
             hen.workDayCount = 0
+          } else if (hen.target.type === COMMERCE) {
+            hen.state = HEN_ENJOYING
           }
 
           hen.sprite.visible = false
@@ -379,6 +395,7 @@ var gameScene = {
 
         hen.workDayCount += 1
         hen.energy -= 1
+        hen.happiness -= 1
 
         if (hen.workDayCount > hen.workDay) {
 
@@ -386,6 +403,15 @@ var gameScene = {
           hen.target = hen.home
           henFindPathToTarget(hen)
 
+        }
+
+      } else if (hen.state === HEN_ENJOYING) {
+
+        hen.happiness += 1
+
+        if (hen.happiness > 500) {
+          hen.target = hen.home
+          henFindPathToTarget(hen)
         }
 
       }
