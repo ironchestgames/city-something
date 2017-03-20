@@ -63,8 +63,9 @@ windowLoad(function () {
     ])
 
   // init browserGameLoop
+  var timestep = 1000 / 30
   var loop = browserGameLoop({
-    updateTimeStep: 1000 / 30,
+    updateTimeStep: timestep,
     fpsFilterStrength: 20,
     slow: 1,
     input: function() {},
@@ -97,6 +98,7 @@ windowLoad(function () {
       }
     },
   })
+  loop.timestep = timestep
 
   global.sceneManager = sceneManager
   global.loop = loop
