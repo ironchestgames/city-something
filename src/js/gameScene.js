@@ -9,8 +9,6 @@ global.easystarGrid = easystarGrid
 var WALKABLE = 0
 var NON_WALKABLE = 1
 
-var hen = null
-
 var FOREST = 'FOREST'
 var RESIDENCE = 'RESIDENCE'
 var COMMERCE = 'COMMERCE'
@@ -21,6 +19,7 @@ var rowCount = 9
 
 var tiles = []
 var markedTile = null
+var hens = []
 
 var hideAllSpritesInTile = function (tile) {
   for (var spriteKey in tile.sprites) {
@@ -39,6 +38,36 @@ var buildRoadInTile = function (tile) {
       easystarGrid[r][c] = tiles[(r * columnCount) + c].hasRoads === true ? WALKABLE : NON_WALKABLE
     }
   }
+}
+
+var henMoveIn = function (tile, henContainer) {
+  var hen = {
+    x: tile.x,
+    y: tile.y,
+    speed: 2.689,
+    path: [],
+    target: tiles.find(function (tile) {
+      return tile.type === INDUSTRY
+    }),
+    isWalking: false,
+    sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
+  }
+
+  hen.sprite.visible = false
+
+  henContainer.addChild(hen.sprite)
+
+  easystar.findPath(hen.x, hen.y, hen.target.x, hen.target.y, function(path) {
+    if (path !== null) {
+      hen.path = path
+      hen.isWalking = true
+      hen.sprite.x = hen.x * 64
+      hen.sprite.y = hen.y * 64
+      hen.sprite.visible = true
+    }
+  })
+
+  hens.push(hen)
 }
 
 var zoneCountText
@@ -87,6 +116,7 @@ var gameScene = {
           type: FOREST,
           hasRoads: false,
           container: new PIXI.Container(),
+          hens: [],
           sprites: {
             FOREST: new PIXI.Sprite(PIXI.loader.resources['forest_1'].texture),
             RESIDENCE: new PIXI.Sprite(PIXI.loader.resources['residences_1'].texture),
@@ -152,7 +182,8 @@ var gameScene = {
       markedTile.sprites.RESIDENCE.visible = true
       markedTile.type = RESIDENCE
       buildRoadInTile(markedTile)
-    }
+      henMoveIn(markedTile, this.henContainer)
+    }.bind(this)
 
     var onBuildCommerce = function () {
       hideAllSpritesInTile(markedTile)
@@ -192,37 +223,6 @@ var gameScene = {
       onKeyDown: onBuildRoad
     })
 
-    keyH = new KeyButton({
-      key: 'h',
-      onKeyDown: function () {
-        hen = {
-          x: markedTile.x,
-          y: markedTile.y,
-          speed: 2.689,
-          path: [],
-          target: tiles.find(function (tile) {
-            return tile.type === INDUSTRY
-          }),
-          isWalking: false,
-          sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
-        }
-
-        hen.sprite.visible = false
-
-        this.henContainer.addChild(hen.sprite)
-
-        easystar.findPath(hen.x, hen.y, hen.target.x, hen.target.y, function(path) {
-          if (path !== null) {
-            hen.path = path
-            hen.isWalking = true
-            hen.sprite.x = hen.x * 64
-            hen.sprite.y = hen.y * 64
-            hen.sprite.visible = true
-          }
-        })
-      }.bind(this)
-    })
-
   },
   destroy: function () {
     this.container.destroy()
@@ -252,30 +252,35 @@ var gameScene = {
 
     easystar.calculate()
 
-    if (hen && hen.isWalking) {
-      
-      var nextPathPoint = hen.path[0]
+    for (var i = 0; i < hens.length; i++) {
+      var hen = hens[i]
 
-      var dx = nextPathPoint.x * 64 - hen.sprite.x
-      var dy = nextPathPoint.y * 64 - hen.sprite.y
+      if (hen.isWalking) {
+        
+        var nextPathPoint = hen.path[0]
 
-      var angle = Math.atan2(dy, dx)
+        var dx = nextPathPoint.x * 64 - hen.sprite.x
+        var dy = nextPathPoint.y * 64 - hen.sprite.y
 
-      hen.sprite.x += Math.cos(angle) * hen.speed
-      hen.sprite.y += Math.sin(angle) * hen.speed
+        var angle = Math.atan2(dy, dx)
 
-      var distance = Math.sqrt(dx * dx + dy * dy)
+        hen.sprite.x += Math.cos(angle) * hen.speed
+        hen.sprite.y += Math.sin(angle) * hen.speed
 
-      if (distance < hen.speed + 0.1) {
-        console.log(nextPathPoint.x, nextPathPoint.y)
-        var reachedPoint = hen.path.shift()
-        hen.x = reachedPoint.x
-        hen.y = reachedPoint.y
-      }
+        var distance = Math.sqrt(dx * dx + dy * dy)
 
-      if (hen.path.length === 0) {
-        hen.isWalking = false
-        console.log('stopped walking', hen)
+        if (distance < hen.speed + 0.1) {
+          console.log(nextPathPoint.x, nextPathPoint.y)
+          var reachedPoint = hen.path.shift()
+          hen.x = reachedPoint.x
+          hen.y = reachedPoint.y
+        }
+
+        if (hen.path.length === 0) {
+          hen.isWalking = false
+          hen.sprite.visible = false
+          console.log('stopped walking', hen)
+        }
       }
     }
   },
