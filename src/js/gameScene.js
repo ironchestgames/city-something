@@ -26,7 +26,7 @@ var markedTile = null
 var hens = []
 var henIdCounter = 0
 
-var workDayInFrames = null // NOTE: set in create
+var dayInFrames = null // NOTE: set in create
 
 var getTile = function (x, y) {
   return tiles[y * rowCount + x]
@@ -67,7 +67,7 @@ var henMoveIn = function (tile, henContainer) {
     workPlace: null,
     target: null,
     home: tile,
-    workDay: workDayInFrames,
+    workDay: dayInFrames / 3,
     workDayCount: 0,
     state: HEN_IDLING_AT_HOME,
     sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
@@ -127,7 +127,8 @@ var gameScene = {
   name: 'gameScene',
   create: function (sceneParams) {
 
-    workDayInFrames = global.loop.timestep * 3
+    var dayInSeconds = 12
+    dayInFrames = global.loop.timestep * dayInSeconds
 
     this.container = new PIXI.Container()
 
