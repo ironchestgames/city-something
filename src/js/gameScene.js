@@ -15,6 +15,7 @@ var tiles = []
 var markedTile = null
 var hens = []
 var henIdCounter = 0
+var residenceWalkingCost = 3
 
 var dayInFrames = null // NOTE: set in create
 
@@ -281,6 +282,7 @@ var gameScene = {
       hideAllSpritesInTile(markedTile)
       markedTile.typeSprites.RESIDENCE.visible = true
       markedTile.type = gameVars.RESIDENCE
+      easystar.setAdditionalPointCost(markedTile.x, markedTile.y, residenceWalkingCost)
       buildRoadInTile(markedTile)
 
       var hen = new Citizen(markedTile, findPathToTarget, findClosestTileOfType, getTile)
