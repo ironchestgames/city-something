@@ -29,9 +29,9 @@ var getTilesByType = function (type) {
 }
 
 var hideAllSpritesInTile = function (tile) {
-  for (var spriteKey in tile.sprites) {
-    if (tile.sprites.hasOwnProperty(spriteKey)) {
-      tile.sprites[spriteKey].visible = false
+  for (var spriteKey in tile.typeSprites) {
+    if (tile.typeSprites.hasOwnProperty(spriteKey)) {
+      tile.typeSprites[spriteKey].visible = false
     }
   }
 }
@@ -149,7 +149,7 @@ var gameScene = {
           type: gameVars.FOREST,
           terrain: gameVars.TERRAIN_FOREST,
           container: new PIXI.Container(),
-          sprites: {
+          typeSprites: {
             FOREST: new PIXI.Sprite(PIXI.loader.resources['forest_1'].texture),
             RESIDENCE: new PIXI.Sprite(PIXI.loader.resources['residences_1'].texture),
             COMMERCE: new PIXI.Sprite(PIXI.loader.resources['commerce_1'].texture),
@@ -158,9 +158,9 @@ var gameScene = {
           roadSprite: new PIXI.Sprite(PIXI.loader.resources['road_WSEN'].texture),
         }
 
-        for (var spriteKey in tile.sprites) {
-          if (tile.sprites.hasOwnProperty(spriteKey)) {
-            tile.container.addChild(tile.sprites[spriteKey])
+        for (var spriteKey in tile.typeSprites) {
+          if (tile.typeSprites.hasOwnProperty(spriteKey)) {
+            tile.container.addChild(tile.typeSprites[spriteKey])
           }
         }
 
@@ -177,7 +177,7 @@ var gameScene = {
 
         tile.container.addChild(inputArea)
 
-        tile.sprites.FOREST.visible = true
+        tile.typeSprites.FOREST.visible = true
 
         tile.container.x = c * 64
         tile.container.y = r * 64
@@ -223,7 +223,7 @@ var gameScene = {
 
     var onBuildResidence = function () {
       hideAllSpritesInTile(markedTile)
-      markedTile.sprites.RESIDENCE.visible = true
+      markedTile.typeSprites.RESIDENCE.visible = true
       markedTile.type = gameVars.RESIDENCE
       buildRoadInTile(markedTile)
 
@@ -237,7 +237,7 @@ var gameScene = {
 
     var onBuildCommerce = function () {
       hideAllSpritesInTile(markedTile)
-      markedTile.sprites.COMMERCE.visible = true
+      markedTile.typeSprites.COMMERCE.visible = true
       markedTile.type = gameVars.COMMERCE
       buildRoadInTile(markedTile)
       updateMarkedTileInfoText()
@@ -245,7 +245,7 @@ var gameScene = {
 
     var onBuildIndustry = function () {
       hideAllSpritesInTile(markedTile)
-      markedTile.sprites.INDUSTRY.visible = true
+      markedTile.typeSprites.INDUSTRY.visible = true
       markedTile.type = gameVars.INDUSTRY
       buildRoadInTile(markedTile)
       updateMarkedTileInfoText()
