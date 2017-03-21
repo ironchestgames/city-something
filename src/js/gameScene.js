@@ -36,10 +36,54 @@ var hideAllSpritesInTile = function (tile) {
   }
 }
 
+var updateRoads = function () {
+  for (var i = 0; i < tiles.length; i++) {
+    var currentTile = tiles[i]
+
+    for (var j in currentTile.roadSprites) {
+      currentTile.roadSprites[j].visible = false
+    }
+
+    var neighbors = [
+      getTile(currentTile.x - 1, currentTile.y), // W
+      getTile(currentTile.x, currentTile.y + 1), // S
+      getTile(currentTile.x + 1, currentTile.y), // E
+      getTile(currentTile.x, currentTile.y - 1), // N
+    ]
+
+    var neighborCount = 0
+    for (var j = 0; j < neighbors.length; j++) {
+      if (neighbors[j] && neighbors[j].terrain === gameVars.TERRAIN_URBAN) {
+        neighborCount++
+      }
+    }
+
+    if (currentTile.terrain === gameVars.TERRAIN_URBAN) {
+      if (neighborCount === 0) {
+        currentTile.roadSprites.R.visible = true
+      } else {
+        if (neighbors[0] && neighbors[0].terrain === gameVars.TERRAIN_URBAN) {
+          currentTile.roadSprites.W.visible = true
+        }
+        if (neighbors[1] && neighbors[1].terrain === gameVars.TERRAIN_URBAN) {
+          currentTile.roadSprites.S.visible = true
+        }
+        if (neighbors[2] && neighbors[2].terrain === gameVars.TERRAIN_URBAN) {
+          currentTile.roadSprites.E.visible = true
+        }
+        if (neighbors[3] && neighbors[3].terrain === gameVars.TERRAIN_URBAN) {
+          currentTile.roadSprites.N.visible = true
+        }
+      }
+    }
+  }
+}
+
 var buildRoadInTile = function (tile) {
-  tile.roadSprite.visible = true
   tile.terrain = gameVars.TERRAIN_URBAN
   easystarGrid[tile.y][tile.x] = gameVars.TERRAIN_URBAN
+
+  updateRoads()
 }
 
 var findPathToTarget = function (hen) {
@@ -155,7 +199,13 @@ var gameScene = {
             COMMERCE: new PIXI.Sprite(PIXI.loader.resources['commerce_1'].texture),
             INDUSTRY: new PIXI.Sprite(PIXI.loader.resources['industry_1'].texture),
           },
-          roadSprite: new PIXI.Sprite(PIXI.loader.resources['road_WSEN'].texture),
+          roadSprites: {
+            W: new PIXI.Sprite(PIXI.loader.resources['road_W'].texture),
+            S: new PIXI.Sprite(PIXI.loader.resources['road_S'].texture),
+            E: new PIXI.Sprite(PIXI.loader.resources['road_E'].texture),
+            N: new PIXI.Sprite(PIXI.loader.resources['road_N'].texture),
+            R: new PIXI.Sprite(PIXI.loader.resources['road_R'].texture),
+          },
         }
 
         for (var spriteKey in tile.typeSprites) {
@@ -165,8 +215,14 @@ var gameScene = {
         }
 
         hideAllSpritesInTile(tile)
-        tile.container.addChild(tile.roadSprite)
-        tile.roadSprite.visible = false
+
+        for (var spriteKey in tile.roadSprites) {
+          if (tile.roadSprites.hasOwnProperty(spriteKey)) {
+            var roadSprite = tile.roadSprites[spriteKey]
+            roadSprite.visible = false
+            tile.container.addChild(roadSprite)
+          }
+        }
 
         var inputArea = new PIXI.Sprite(PIXI.Texture.EMPTY)
         inputArea.width = 64

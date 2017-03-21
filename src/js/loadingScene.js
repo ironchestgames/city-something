@@ -17,10 +17,10 @@ var loadingScene = {
     .add('industry_1', 'assets/images/industry_1.png')
 
     .add('road_W', 'assets/images/road_W.png')
-    .add('road_WE', 'assets/images/road_WE.png')
-    .add('road_WS', 'assets/images/road_WS.png')
-    .add('road_WSE', 'assets/images/road_WSE.png')
-    .add('road_WSEN', 'assets/images/road_WSEN.png')
+    .add('road_E', 'assets/images/road_E.png')
+    .add('road_S', 'assets/images/road_S.png')
+    .add('road_N', 'assets/images/road_N.png')
+    .add('road_R', 'assets/images/road_R.png')
     
     .load(function () {
       this.changeScene(localStorage.scene || 'gameScene', sceneParams)
