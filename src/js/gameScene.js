@@ -97,9 +97,9 @@ var findPathToTarget = function (hen) {
       }
       hen.tilePath = tilePath
       hen.state = Citizen.STATE_WALKING
-      hen.sprite.x = hen.tileX * 64
-      hen.sprite.y = hen.tileY * 64
-      hen.sprite.visible = true
+      hen.container.x = hen.tileX * 64
+      hen.container.y = hen.tileY * 64
+      hen.container.visible = true
     }
   })
 }
@@ -286,7 +286,7 @@ var gameScene = {
       buildRoadInTile(markedTile)
 
       var hen = new Citizen(markedTile, findPathToTarget, findClosestTileOfType, getTile)
-      this.henContainer.addChild(hen.sprite)
+      this.henContainer.addChild(hen.container)
       hens.push(hen)
 
       updateMarkedTileInfoText()

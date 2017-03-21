@@ -9,7 +9,9 @@ var loadingScene = {
 
     .add('marker', 'assets/images/marker.png')
 
-    .add('hen001', 'assets/images/hen001.png')
+    .add('hen_R', 'assets/images/hen_R.png')
+    .add('hen_C', 'assets/images/hen_C.png')
+    .add('hen_I', 'assets/images/hen_I.png')
 
     .add('forest_1', 'assets/images/forest_1.png')
     .add('residences_1', 'assets/images/residences_1.png')

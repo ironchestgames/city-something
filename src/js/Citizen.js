@@ -23,12 +23,24 @@ var Citizen = function (startTile, findPathToTarget, findClosestTileOfType, getT
   this.energy = 1000
   this.happiness = 1000
   this.state = Citizen.STATE_RESTING
+  this.role = Citizen.ROLE_CIVILIAN
 
   // sprites
-  this.sprite = new PIXI.Sprite(PIXI.loader.resources['hen001'].texture)
-  this.sprite.anchor.x = 0.5
-  this.sprite.anchor.y = 0.5
-  this.sprite.visible = false
+  this.sprites = {
+    [Citizen.ROLE_CIVILIAN]: new PIXI.Sprite(PIXI.loader.resources['hen_R'].texture),
+    [Citizen.ROLE_COMMERCE_WORKER]: new PIXI.Sprite(PIXI.loader.resources['hen_C'].texture),
+    [Citizen.ROLE_INDUSTRY_WORKER]: new PIXI.Sprite(PIXI.loader.resources['hen_I'].texture),
+  }
+
+  this.container = new PIXI.Container()
+
+  this.container.addChild(this.sprites[Citizen.ROLE_CIVILIAN])
+  this.container.addChild(this.sprites[Citizen.ROLE_COMMERCE_WORKER])
+  this.container.addChild(this.sprites[Citizen.ROLE_INDUSTRY_WORKER])
+  
+  this.container.pivot.x = 32
+  this.container.pivot.y = 32
+  this.container.visible = false
 }
 
 Citizen.prototype.stateRestingUpdate = function () {
@@ -69,15 +81,15 @@ Citizen.prototype.stateWalkingUpdate = function () {
     
   var nextTileInPath = this.tilePath[0]
 
-  var dx = nextTileInPath.x * 64 - this.sprite.x
-  var dy = nextTileInPath.y * 64 - this.sprite.y
+  var dx = nextTileInPath.x * 64 - this.container.x
+  var dy = nextTileInPath.y * 64 - this.container.y
 
   var angle = Math.atan2(dy, dx)
 
   var speed = this.speed
 
-  this.sprite.x += Math.cos(angle) * speed
-  this.sprite.y += Math.sin(angle) * speed
+  this.container.x += Math.cos(angle) * speed
+  this.container.y += Math.sin(angle) * speed
 
   var distance = Math.sqrt(dx * dx + dy * dy)
 
@@ -98,7 +110,7 @@ Citizen.prototype.stateWalkingUpdate = function () {
       this.state = Citizen.STATE_ENJOYING
     }
 
-    this.sprite.visible = false
+    this.container.visible = false
     // console.log('stopped walking', hen)
   }
 
@@ -131,6 +143,12 @@ Citizen.prototype.stateEnjoyingUpdate = function () {
 
 Citizen.prototype.update = function () {
 
+  for (var spriteKey in this.sprites) {
+    this.sprites[spriteKey].visible = false
+  }
+
+  this.sprites[this.role].visible = true
+
   if (this.state === Citizen.STATE_RESTING) {
 
     this.stateRestingUpdate()
@@ -154,5 +172,9 @@ Citizen.STATE_RESTING = 'STATE_RESTING'
 Citizen.STATE_WALKING = 'STATE_WALKING'
 Citizen.STATE_WORKING = 'STATE_WORKING'
 Citizen.STATE_ENJOYING = 'STATE_ENJOYING'
+
+Citizen.ROLE_CIVILIAN = 'ROLE_CIVILIAN'
+Citizen.ROLE_INDUSTRY_WORKER = 'ROLE_INDUSTRY_WORKER'
+Citizen.ROLE_COMMERCE_WORKER = 'ROLE_COMMERCE_WORKER'
 
 module.exports = Citizen
