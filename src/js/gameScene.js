@@ -1,25 +1,12 @@
 var KeyButton = require('./KeyButton')
 var Easystarjs = require('easystarjs')
+var gameVars = require('./gameVars')
 var Citizen = require('./Citizen')
 
 var easystar = new Easystarjs.js()
 var easystarGrid = []
 
 global.easystarGrid = easystarGrid
-
-var TERRAIN_URBAN = 0
-var TERRAIN_FOREST = 1
-var TERRAIN_IMPENETRABLE = 2
-
-var FOREST = 'FOREST'
-var RESIDENCE = 'RESIDENCE'
-var COMMERCE = 'COMMERCE'
-var INDUSTRY = 'INDUSTRY'
-
-var HEN_RESTING = 'HEN_RESTING'
-var HEN_WALKING = 'HEN_WALKING'
-var HEN_WORKING = 'HEN_WORKING'
-var HEN_ENJOYING = 'HEN_ENJOYING'
 
 var columnCount = 9
 var rowCount = 9
@@ -51,20 +38,15 @@ var hideAllSpritesInTile = function (tile) {
 
 var buildRoadInTile = function (tile) {
   tile.roadSprite.visible = true
-  tile.terrain = TERRAIN_URBAN
-  easystarGrid[tile.y][tile.x] = TERRAIN_URBAN
+  tile.terrain = gameVars.TERRAIN_URBAN
+  easystarGrid[tile.y][tile.x] = gameVars.TERRAIN_URBAN
 }
 
-var henMoveIn = function (tile, henContainer) {
-
-  
-}
-
-var henFindPathToTarget = function (hen) {
+var findPathToTarget = function (hen) {
   easystar.findPath(hen.x, hen.y, hen.target.x, hen.target.y, function(path) {
     if (path !== null) {
       hen.path = path
-      hen.state = HEN_WALKING
+      hen.state = Citizen.STATE_WALKING
       hen.sprite.x = hen.x * 64
       hen.sprite.y = hen.y * 64
       hen.sprite.visible = true
@@ -140,14 +122,14 @@ var gameScene = {
       easystarGrid.push([])
       for (var c = 0; c < columnCount; c++) {
 
-        easystarGrid[r].push(TERRAIN_FOREST)
+        easystarGrid[r].push(gameVars.TERRAIN_FOREST)
 
         var tile = {
           id: tileIdCount,
           x: c,
           y: r,
-          type: FOREST,
-          terrain: TERRAIN_FOREST,
+          type: gameVars.FOREST,
+          terrain: gameVars.TERRAIN_FOREST,
           container: new PIXI.Container(),
           hens: [],
           sprites: {
@@ -195,9 +177,9 @@ var gameScene = {
     }
 
     easystar.setGrid(easystarGrid)
-    easystar.setAcceptableTiles([TERRAIN_URBAN, TERRAIN_FOREST])
-    easystar.setTileCost(TERRAIN_URBAN, 1)
-    easystar.setTileCost(TERRAIN_FOREST, 7)
+    easystar.setAcceptableTiles([gameVars.TERRAIN_URBAN, gameVars.TERRAIN_FOREST])
+    easystar.setTileCost(gameVars.TERRAIN_URBAN, 1)
+    easystar.setTileCost(gameVars.TERRAIN_FOREST, 7)
     easystar.setIterationsPerCalculation(global.loop.getFps())
 
     this.markerSprite = new PIXI.Sprite(PIXI.loader.resources['marker'].texture)
@@ -219,10 +201,10 @@ var gameScene = {
     var onBuildResidence = function () {
       hideAllSpritesInTile(markedTile)
       markedTile.sprites.RESIDENCE.visible = true
-      markedTile.type = RESIDENCE
+      markedTile.type = gameVars.RESIDENCE
       buildRoadInTile(markedTile)
 
-      var hen = new Citizen(markedTile)
+      var hen = new Citizen(markedTile, findPathToTarget, findClosestTileOfType, getTile)
       this.henContainer.addChild(hen.sprite)
       hens.push(hen)
 
@@ -231,14 +213,14 @@ var gameScene = {
     var onBuildCommerce = function () {
       hideAllSpritesInTile(markedTile)
       markedTile.sprites.COMMERCE.visible = true
-      markedTile.type = COMMERCE
+      markedTile.type = gameVars.COMMERCE
       buildRoadInTile(markedTile)
     }
 
     var onBuildIndustry = function () {
       hideAllSpritesInTile(markedTile)
       markedTile.sprites.INDUSTRY.visible = true
-      markedTile.type = INDUSTRY
+      markedTile.type = gameVars.INDUSTRY
       buildRoadInTile(markedTile)
     }
 
@@ -280,11 +262,11 @@ var gameScene = {
 
     for (var i = 0; i < tiles.length; i++) {
       var tile = tiles[i]
-      if (tile.type === RESIDENCE) {
+      if (tile.type === gameVars.RESIDENCE) {
         residenceCount++
-      } else if (tile.type === COMMERCE) {
+      } else if (tile.type === gameVars.COMMERCE) {
         commerceCount++
-      } else if (tile.type === INDUSTRY) {
+      } else if (tile.type === gameVars.INDUSTRY) {
         industryCount++
       }
     }
@@ -298,106 +280,7 @@ var gameScene = {
     for (var i = 0; i < hens.length; i++) {
       var hen = hens[i]
 
-      if (hen.state === HEN_RESTING) {
-
-        hen.energy += 1.5
-        hen.happiness += 0.1
-
-        if (hen.energy > 1000) {
-          hen.energy = 1000
-        }
-
-        if (hen.happiness < 200 && hen.energy > 400) {
-
-          var closestCommerce = findClosestTileOfType(hen, COMMERCE)
-
-          if (closestCommerce) {
-            hen.target = closestCommerce
-            henFindPathToTarget(hen)
-          }
-
-        } else if (hen.workPlace) {
-
-          if (hen.energy > 500) {
-            hen.target = hen.workPlace
-            henFindPathToTarget(hen)
-          }
-
-        } else {
-
-          hen.workPlace = findClosestTileOfType(hen, INDUSTRY)
-
-        }
-
-      } else if (hen.state === HEN_WALKING && hen.path && hen.path.length) {
-
-        hen.energy -= 0.2
-        
-        var nextPathPoint = hen.path[0]
-
-        var dx = nextPathPoint.x * 64 - hen.sprite.x
-        var dy = nextPathPoint.y * 64 - hen.sprite.y
-
-        var angle = Math.atan2(dy, dx)
-
-        var speed = hen.speed
-        var currentTerrain = getTile(Math.round(hen.sprite.x / 64),
-            Math.round(hen.sprite.y / 64)).terrain
-
-        if (currentTerrain === TERRAIN_FOREST) {
-          speed = hen.speed / 3
-        }
-
-        hen.sprite.x += Math.cos(angle) * speed
-        hen.sprite.y += Math.sin(angle) * speed
-
-        var distance = Math.sqrt(dx * dx + dy * dy)
-
-        if (distance < hen.speed + 0.1) {
-          // console.log(nextPathPoint.x, nextPathPoint.y)
-          var reachedPoint = hen.path.shift()
-          hen.x = reachedPoint.x
-          hen.y = reachedPoint.y
-        }
-
-        if (hen.path.length === 0) {
-          if (hen.target === hen.home) {
-            hen.state = HEN_RESTING
-          } else if (hen.target === hen.workPlace) {
-            hen.state = HEN_WORKING
-            hen.workDayCount = 0
-          } else if (hen.target.type === COMMERCE) {
-            hen.state = HEN_ENJOYING
-          }
-
-          hen.sprite.visible = false
-          // console.log('stopped walking', hen)
-        }
-
-      } else if (hen.state === HEN_WORKING) {
-
-        hen.workDayCount += 1
-        hen.energy -= 1
-        hen.happiness -= 1
-
-        if (hen.workDayCount > hen.workDay) {
-
-          hen.workDayCount = 0
-          hen.target = hen.home
-          henFindPathToTarget(hen)
-
-        }
-
-      } else if (hen.state === HEN_ENJOYING) {
-
-        hen.happiness += 1
-
-        if (hen.happiness > 500) {
-          hen.target = hen.home
-          henFindPathToTarget(hen)
-        }
-
-      }
+      hen.update()
     }
   },
   draw: function () {
