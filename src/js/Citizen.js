@@ -76,10 +76,6 @@ Citizen.prototype.stateWalkingUpdate = function () {
 
   var speed = this.speed
 
-  if (nextTileInPath.terrain === gameVars.TERRAIN_FOREST) {
-    speed = this.speed / 3
-  }
-
   this.sprite.x += Math.cos(angle) * speed
   this.sprite.y += Math.sin(angle) * speed
 

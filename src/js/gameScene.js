@@ -85,7 +85,17 @@ var findClosestTileOfType = function (hen, type) {
   return null
 }
 
+var updateMarkedTileInfoText = function () {
+  var terrainMap = {}
+  terrainMap[gameVars.TERRAIN_URBAN] = 'TERRAIN_URBAN'
+  terrainMap[gameVars.TERRAIN_FOREST] = 'TERRAIN_FOREST'
+
+  markedTileInfoText.text = markedTile.type + '\n' +
+      terrainMap[markedTile.terrain]
+}
+
 var zoneCountText
+var markedTileInfoText
 
 var keyR
 var keyC
@@ -119,6 +129,9 @@ var gameScene = {
       markedTile = tiles.find(function (tile) {
         return tile.id === event.target.tileId
       })
+
+      updateMarkedTileInfoText()
+
     }.bind(this)
 
     var tileIdCount = 0
@@ -136,7 +149,6 @@ var gameScene = {
           type: gameVars.FOREST,
           terrain: gameVars.TERRAIN_FOREST,
           container: new PIXI.Container(),
-          hens: [],
           sprites: {
             FOREST: new PIXI.Sprite(PIXI.loader.resources['forest_1'].texture),
             RESIDENCE: new PIXI.Sprite(PIXI.loader.resources['residences_1'].texture),
@@ -182,19 +194,25 @@ var gameScene = {
     }
 
     easystar.setGrid(easystarGrid)
-    easystar.setAcceptableTiles([gameVars.TERRAIN_URBAN, gameVars.TERRAIN_FOREST])
+    easystar.setAcceptableTiles([gameVars.TERRAIN_URBAN])
     easystar.setTileCost(gameVars.TERRAIN_URBAN, 1)
-    easystar.setTileCost(gameVars.TERRAIN_FOREST, 7)
     easystar.setIterationsPerCalculation(global.loop.getFps())
 
     this.markerSprite = new PIXI.Sprite(PIXI.loader.resources['marker'].texture)
     this.markerSprite.visible = false
 
     zoneCountText = new PIXI.Text('This is a pixi text', {
-      fill: 0xeeeeee,
+      fill: 0xffffff,
     })
 
+    markedTileInfoText = new PIXI.Text('Mark tile to get info', {
+      fill: 0xffffff,
+    })
+
+    markedTileInfoText.y = 64 * rowCount + 30
+
     this.guiContainer.addChild(zoneCountText)
+    this.guiContainer.addChild(markedTileInfoText)
 
     this.container.addChild(this.tileContainer)
     this.container.addChild(this.tileContainer)
@@ -213,6 +231,8 @@ var gameScene = {
       this.henContainer.addChild(hen.sprite)
       hens.push(hen)
 
+      updateMarkedTileInfoText()
+
     }.bind(this)
 
     var onBuildCommerce = function () {
@@ -220,6 +240,7 @@ var gameScene = {
       markedTile.sprites.COMMERCE.visible = true
       markedTile.type = gameVars.COMMERCE
       buildRoadInTile(markedTile)
+      updateMarkedTileInfoText()
     }
 
     var onBuildIndustry = function () {
@@ -227,10 +248,12 @@ var gameScene = {
       markedTile.sprites.INDUSTRY.visible = true
       markedTile.type = gameVars.INDUSTRY
       buildRoadInTile(markedTile)
+      updateMarkedTileInfoText()
     }
 
     var onBuildRoad = function () {
       buildRoadInTile(markedTile)
+      updateMarkedTileInfoText()
     }
 
     keyR = new KeyButton({
