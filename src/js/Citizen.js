@@ -11,8 +11,8 @@ var Citizen = function (startTile, findPathToTarget, findClosestTileOfType, getT
 
   // values
   this.id = idCounter++
-  this.x = startTile.x
-  this.y = startTile.y
+  this.tileX = startTile.x
+  this.tileY = startTile.y
   this.speed = 2.689
   this.path = []
   this.workPlace = null
@@ -90,8 +90,8 @@ Citizen.prototype.stateWalkingUpdate = function () {
   if (distance < this.speed + 0.1) {
     // console.log(nextPathPoint.x, nextPathPoint.y)
     var reachedPoint = this.path.shift()
-    this.x = reachedPoint.x
-    this.y = reachedPoint.y
+    this.tileX = reachedPoint.x
+    this.tileY = reachedPoint.y
   }
 
   if (this.path.length === 0) {
@@ -126,7 +126,7 @@ Citizen.prototype.stateWorkingUpdate = function () {
 }
 
 Citizen.prototype.stateEnjoyingUpdate = function () {
-  
+
   this.happiness += 1
 
   if (this.happiness > 500) {

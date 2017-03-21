@@ -43,12 +43,12 @@ var buildRoadInTile = function (tile) {
 }
 
 var findPathToTarget = function (hen) {
-  easystar.findPath(hen.x, hen.y, hen.target.x, hen.target.y, function(path) {
+  easystar.findPath(hen.tileX, hen.tileY, hen.target.x, hen.target.y, function(path) {
     if (path !== null) {
       hen.path = path
       hen.state = Citizen.STATE_WALKING
-      hen.sprite.x = hen.x * 64
-      hen.sprite.y = hen.y * 64
+      hen.sprite.x = hen.tileX * 64
+      hen.sprite.y = hen.tileY * 64
       hen.sprite.visible = true
     }
   })
@@ -59,14 +59,14 @@ var findClosestTileOfType = function (hen, type) {
 
   if (tilesOfType.length > 0) {
     var closestTile = tilesOfType.pop()
-    var dx = closestTile.x - hen.x
-    var dy = closestTile.y - hen.y
+    var dx = closestTile.x - hen.tileX
+    var dy = closestTile.y - hen.tileY
     var closestDistance = Math.sqrt(dx * dx + dy * dy)
 
     while (tilesOfType.length) {
       var tile = tilesOfType.pop()
-      dx = tile.x - hen.x
-      dy = tile.y - hen.y
+      dx = tile.x - hen.tileX
+      dy = tile.y - hen.tileY
       var distance = Math.sqrt(dx * dx + dy * dy)
 
       if (distance < closestDistance) {
