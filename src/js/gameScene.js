@@ -1,5 +1,6 @@
 var KeyButton = require('./KeyButton')
 var Easystarjs = require('easystarjs')
+var Citizen = require('./Citizen')
 
 var easystar = new Easystarjs.js()
 var easystarGrid = []
@@ -55,30 +56,8 @@ var buildRoadInTile = function (tile) {
 }
 
 var henMoveIn = function (tile, henContainer) {
-  var hen = {
-    id: henIdCounter++,
-    x: tile.x,
-    y: tile.y,
-    speed: 2.689,
-    path: [],
-    workPlace: null,
-    target: null,
-    home: tile,
-    workDay: dayInFrames / 3,
-    workDayCount: 0,
-    energy: 1000,
-    happiness: 1000,
-    state: HEN_RESTING,
-    sprite: new PIXI.Sprite(PIXI.loader.resources['hen001'].texture),
-  }
 
-  hen.sprite.anchor.x = 0.5
-  hen.sprite.anchor.y = 0.5
-  hen.sprite.visible = false
-
-  henContainer.addChild(hen.sprite)
-
-  hens.push(hen)
+  
 }
 
 var henFindPathToTarget = function (hen) {
@@ -242,7 +221,11 @@ var gameScene = {
       markedTile.sprites.RESIDENCE.visible = true
       markedTile.type = RESIDENCE
       buildRoadInTile(markedTile)
-      henMoveIn(markedTile, this.henContainer)
+
+      var hen = new Citizen(markedTile)
+      this.henContainer.addChild(hen.sprite)
+      hens.push(hen)
+
     }.bind(this)
 
     var onBuildCommerce = function () {
