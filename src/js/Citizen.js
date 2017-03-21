@@ -14,7 +14,7 @@ var Citizen = function (startTile, findPathToTarget, findClosestTileOfType, getT
   this.tileX = startTile.x
   this.tileY = startTile.y
   this.speed = 2.689
-  this.path = []
+  this.tilePath = []
   this.workPlace = null
   this.target = null
   this.home = startTile
@@ -67,18 +67,16 @@ Citizen.prototype.stateWalkingUpdate = function () {
 
   this.energy -= 0.2
     
-  var nextPathPoint = this.path[0]
+  var nextTileInPath = this.tilePath[0]
 
-  var dx = nextPathPoint.x * 64 - this.sprite.x
-  var dy = nextPathPoint.y * 64 - this.sprite.y
+  var dx = nextTileInPath.x * 64 - this.sprite.x
+  var dy = nextTileInPath.y * 64 - this.sprite.y
 
   var angle = Math.atan2(dy, dx)
 
   var speed = this.speed
-  var currentTerrain = this.getTile(Math.round(this.sprite.x / 64),
-      Math.round(this.sprite.y / 64)).terrain
 
-  if (currentTerrain === gameVars.TERRAIN_FOREST) {
+  if (nextTileInPath.terrain === gameVars.TERRAIN_FOREST) {
     speed = this.speed / 3
   }
 
@@ -88,13 +86,13 @@ Citizen.prototype.stateWalkingUpdate = function () {
   var distance = Math.sqrt(dx * dx + dy * dy)
 
   if (distance < this.speed + 0.1) {
-    // console.log(nextPathPoint.x, nextPathPoint.y)
-    var reachedPoint = this.path.shift()
+    // console.log(nextTileInPath.x, nextTileInPath.y)
+    var reachedPoint = this.tilePath.shift()
     this.tileX = reachedPoint.x
     this.tileY = reachedPoint.y
   }
 
-  if (this.path.length === 0) {
+  if (this.tilePath.length === 0) {
     if (this.target === this.home) {
       this.state = Citizen.STATE_RESTING
     } else if (this.target === this.workPlace) {
@@ -141,7 +139,7 @@ Citizen.prototype.update = function () {
 
     this.stateRestingUpdate()
 
-  } else if (this.state === Citizen.STATE_WALKING && this.path && this.path.length) {
+  } else if (this.state === Citizen.STATE_WALKING && this.tilePath && this.tilePath.length) {
 
     this.stateWalkingUpdate()  
 

@@ -45,7 +45,12 @@ var buildRoadInTile = function (tile) {
 var findPathToTarget = function (hen) {
   easystar.findPath(hen.tileX, hen.tileY, hen.target.x, hen.target.y, function(path) {
     if (path !== null) {
-      hen.path = path
+      var tilePath = []
+      for (var i = 0; i < path.length; i++) {
+        var pathTile = getTile(path[i].x, path[i].y)
+        tilePath.push(pathTile)
+      }
+      hen.tilePath = tilePath
       hen.state = Citizen.STATE_WALKING
       hen.sprite.x = hen.tileX * 64
       hen.sprite.y = hen.tileY * 64
